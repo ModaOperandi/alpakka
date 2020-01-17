@@ -277,7 +277,8 @@ object Dependencies {
   val Kinesis = Seq(
     libraryDependencies ++= Seq(
         "com.amazonaws" % "aws-java-sdk-kinesis" % AwsSdkVersion, // ApacheV2
-        "org.mockito" % "mockito-core" % mockitoVersion % Test // MIT
+        "org.mockito" % "mockito-core" % mockitoVersion % Test, // MIT
+        "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
       )
   )
 

@@ -25,6 +25,7 @@ import scala.collection.immutable
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Internal API
@@ -40,7 +41,8 @@ private[kinesis] final class KinesisFlowStage[T](
 )(implicit kinesisClient: AmazonKinesisAsync)
     extends GraphStage[
       FlowShape[immutable.Seq[(PutRecordsRequestEntry, T)], Future[immutable.Seq[(PutRecordsResultEntry, T)]]]
-    ] {
+    ]
+    with LazyLogging {
 
   import KinesisFlowStage._
 
@@ -81,8 +83,10 @@ private[kinesis] final class KinesisFlowStage[T](
           .withRecords(job.records.map(_._1).asJavaCollection)
 
         val handler = new AsyncHandler[PutRecordsRequest, PutRecordsResult] {
-          override def onError(exception: Exception): Unit =
+          override def onError(exception: Exception): Unit = {
+            logger.error("Could not put records", exception)
             p.failure(FailurePublishingRecords(exception))
+          }
 
           override def onSuccess(request: PutRecordsRequest, result: PutRecordsResult): Unit = {
             val correlatedRequestResult = result.getRecords.asScala.zip(job.records).toList
